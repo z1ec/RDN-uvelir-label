@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- Общие настройки для всех проектов решения, чтобы не дублировать их в каждом .csproj -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>
