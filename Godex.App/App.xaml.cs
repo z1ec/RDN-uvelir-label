@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using Godex.App.ViewModels;
+using Godex.Excel;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -34,6 +35,8 @@ public partial class App : Application
         // Serilog.ILogger регистрируем как готовый экземпляр (не через DI-конструктор),
         // потому что Log.Logger уже настроен и создан выше, в конструкторе App.
         services.AddSingleton(Log.Logger);
+
+        services.AddSingleton<ExcelWorkbookReader>();
 
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();

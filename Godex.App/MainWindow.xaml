@@ -4,19 +4,60 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="{Binding Title}"
-    Width="900"
-    Height="600"
+    Width="1000"
+    Height="650"
     ExtendsContentIntoTitleBar="True"
     WindowBackdropType="Mica"
     WindowStartupLocation="CenterScreen">
 
-    <StackPanel>
-        <ui:TitleBar Title="{Binding Title}" />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <TextBlock
-            Margin="0,80,0,0"
-            HorizontalAlignment="Center"
-            FontSize="20"
-            Text="{Binding Greeting}" />
-    </StackPanel>
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" />
+
+        <StackPanel
+            Grid.Row="1"
+            Margin="16,8"
+            Orientation="Horizontal">
+            <Button Command="{Binding OpenFileCommand}" Content="Открыть Excel" />
+
+            <ComboBox
+                Width="200"
+                Margin="12,0,0,0"
+                ItemsSource="{Binding Sheets}"
+                SelectedItem="{Binding SelectedSheet}" />
+
+            <TextBlock
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Text="{Binding StatusMessage}" />
+        </StackPanel>
+
+        <DataGrid
+            Grid.Row="2"
+            Margin="16,0"
+            AutoGenerateColumns="True"
+            AutoGeneratingColumn="OnAutoGeneratingColumn"
+            CanUserAddRows="False"
+            ItemsSource="{Binding PreviewTable}" />
+
+        <StackPanel
+            Grid.Row="3"
+            Margin="16,8"
+            Orientation="Horizontal">
+            <Button Command="{Binding SelectAllCommand}" Content="Выбрать всё" />
+            <Button Margin="8,0,0,0" Command="{Binding ClearSelectionCommand}" Content="Снять выбор" />
+
+            <TextBlock Margin="24,0,4,0" VerticalAlignment="Center" Text="Диапазон с" />
+            <TextBox Width="50" Text="{Binding RangeFromText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Margin="4,0" VerticalAlignment="Center" Text="по" />
+            <TextBox Width="50" Text="{Binding RangeToText, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Margin="8,0,0,0" Command="{Binding SelectRangeCommand}" Content="Выбрать диапазон" />
+        </StackPanel>
+    </Grid>
 </ui:FluentWindow>
