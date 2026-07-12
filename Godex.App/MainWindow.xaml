@@ -16,6 +16,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0" Title="{Binding Title}" />
@@ -58,6 +59,24 @@
             <TextBlock Margin="4,0" VerticalAlignment="Center" Text="по" />
             <TextBox Width="50" Text="{Binding RangeToText, UpdateSourceTrigger=PropertyChanged}" />
             <Button Margin="8,0,0,0" Command="{Binding SelectRangeCommand}" Content="Выбрать диапазон" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="4"
+            Margin="16,0,16,16"
+            Orientation="Horizontal">
+            <TextBlock VerticalAlignment="Center" Text="Принтер:" />
+            <ComboBox
+                Width="220"
+                Margin="8,0,0,0"
+                ItemsSource="{Binding Printers}"
+                SelectedItem="{Binding SelectedPrinter}" />
+
+            <ui:Button
+                Margin="12,0,0,0"
+                Appearance="Primary"
+                Command="{Binding PrintTestLabelCommand}"
+                Content="Печать тестовой бирки" />
         </StackPanel>
     </Grid>
 </ui:FluentWindow>

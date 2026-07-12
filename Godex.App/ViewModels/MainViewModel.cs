@@ -1,9 +1,13 @@
 using System.Collections.ObjectModel;
 using System.Data;
+using System.IO;
+using System.Printing;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Godex.Core.Models;
 using Godex.Excel;
+using Godex.Ezpl;
+using Godex.Printing;
 using Microsoft.Win32;
 using Serilog;
 
@@ -12,9 +16,16 @@ namespace Godex.App.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly ExcelWorkbookReader _excelReader;
+    private readonly EzplLabelGenerator _ezplGenerator;
+    private readonly UsbPrinterSender _printerSender;
     private readonly ILogger _logger;
 
     private string? _filePath;
+
+    // Шаблон для кнопки "Печать тестовой бирки" — пока один захардкоженный файл,
+    // без выбора через UI. Полноценный выбор/редактирование шаблонов появится на Этапе 4.
+    private static readonly string TestTemplatePath =
+        Path.Combine(AppContext.BaseDirectory, "SampleTemplates", "test-label.json");
 
     [ObservableProperty]
     private string _title = "Godex Label Printer";
@@ -37,10 +48,42 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _rangeToText = "1";
 
-    public MainViewModel(ExcelWorkbookReader excelReader, ILogger logger)
+    [ObservableProperty]
+    private ObservableCollection<string> _printers = new();
+
+    [ObservableProperty]
+    private string? _selectedPrinter;
+
+    public MainViewModel(
+        ExcelWorkbookReader excelReader,
+        EzplLabelGenerator ezplGenerator,
+        UsbPrinterSender printerSender,
+        ILogger logger)
     {
         _excelReader = excelReader;
+        _ezplGenerator = ezplGenerator;
+        _printerSender = printerSender;
         _logger = logger;
+
+        LoadPrinters();
+    }
+
+    // System.Printing (часть WPF) умеет перечислить принтеры, установленные в Windows, —
+    // берём отсюда же имя для WinAPI OpenPrinter в UsbPrinterSender, чтобы не давать
+    // пользователю вручную вбивать точное системное имя принтера.
+    private void LoadPrinters()
+    {
+        try
+        {
+            using var printServer = new LocalPrintServer();
+            using var queues = printServer.GetPrintQueues();
+            Printers = new ObservableCollection<string>(queues.Select(q => q.Name));
+            SelectedPrinter = Printers.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Не удалось получить список принтеров");
+        }
     }
 
     [RelayCommand]
@@ -163,5 +206,50 @@ public partial class MainViewModel : ObservableObject
             PreviewTable.Rows[i - 1]["Выбрано"] = true;
 
         StatusMessage = $"Выбрано строк: {to - from + 1}";
+    }
+
+    // Временная кнопка для проверки цепочки "данные → EZPL → принтер" целиком, пока нет
+    // ни полноценного редактора шаблонов (Этап 4), ни полноценного сценария печати (Этап 8).
+    // Берёт первую отмеченную галочкой строку (или первую строку таблицы, если ничего
+    // не отмечено) и печатает её по шаблону Godex.App/SampleTemplates/test-label.json.
+    [RelayCommand]
+    private void PrintTestLabel()
+    {
+        if (SelectedPrinter is null)
+        {
+            StatusMessage = "Выберите принтер";
+            return;
+        }
+
+        if (PreviewTable is null || PreviewTable.Rows.Count == 0)
+        {
+            StatusMessage = "Сначала загрузите Excel-файл с данными";
+            return;
+        }
+
+        var selectedRow = PreviewTable.Rows.Cast<DataRow>()
+            .FirstOrDefault(r => (bool)r["Выбрано"]) ?? PreviewTable.Rows[0];
+
+        var values = PreviewTable.Columns.Cast<DataColumn>()
+            .Where(c => c.ColumnName != "Выбрано")
+            .ToDictionary(c => c.ColumnName, c => selectedRow[c].ToString() ?? string.Empty);
+
+        var row = new DataSourceRow { Values = values };
+
+        try
+        {
+            var template = LabelTemplateSerializer.Load(TestTemplatePath);
+            var ezpl = _ezplGenerator.Generate(template, row);
+
+            _printerSender.Send(SelectedPrinter, ezpl);
+
+            StatusMessage = "Бирка отправлена на печать";
+            _logger.Information("Отправлена тестовая бирка на принтер {Printer}", SelectedPrinter);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Не удалось напечатать тестовую бирку");
+            StatusMessage = $"Ошибка печати: {ex.Message}";
+        }
     }
 }

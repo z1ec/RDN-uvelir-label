@@ -24,4 +24,11 @@
     <ProjectReference Include="..\Godex.Printing\Godex.Printing.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Копируем рядом с .exe, чтобы шаблон можно было открыть по относительному пути в рантайме -->
+    <None Include="SampleTemplates\test-label.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

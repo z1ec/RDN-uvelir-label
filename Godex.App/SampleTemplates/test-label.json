@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "label": { "widthMm": 40, "heightMm": 30, "gapMm": 2, "dpi": 203 },
+  "print": { "speed": 3, "darkness": 10, "mode": "T" },
+  "elements": [
+    {
+      "id": "el-1",
+      "type": "text",
+      "xMm": 3,
+      "yMm": 3,
+      "font": "D",
+      "source": { "kind": "column", "columnName": "Артикул" }
+    },
+    {
+      "id": "el-2",
+      "type": "text",
+      "xMm": 3,
+      "yMm": 12,
+      "font": "D",
+      "source": { "kind": "column", "columnName": "Наименование" }
+    }
+  ]
+}
